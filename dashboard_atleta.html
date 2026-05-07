@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Monitoreo Atleta</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #f8f7f4;
+    --surface: #ffffff;
+    --surface2: #f1f0ec;
+    --border: rgba(0,0,0,0.08);
+    --text: #1a1a1a;
+    --text2: #666560;
+    --text3: #999794;
+    --verde: #3B6D11; --verde-bg: #EAF3DE;
+    --amarillo: #854F0B; --amarillo-bg: #FAEEDA;
+    --rojo: #791F1F; --rojo-bg: #FCEBEB;
+    --blue: #378ADD; --blue-dark: #185FA5;
+    --green: #1D9E75;
+    --purple: #534AB7;
+    --red: #E24B4A; --red-dark: #A32D2D;
+    --amber: #EF9F27; --amber-dark: #BA7517;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.5; }
+  header { padding: 32px 40px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-end; justify-content: space-between; }
+  header h1 { font-size: 20px; font-weight: 500; letter-spacing: -0.02em; }
+  header p { font-size: 12px; color: var(--text3); }
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px 40px; }
+  .mg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 32px; }
+  .mc { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .ml { font-size: 11px; color: var(--text3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .mv { font-size: 26px; font-weight: 500; letter-spacing: -0.02em; }
+  .ms { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+  .sl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 16px; font-weight: 500; }
+  .leg { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 14px; font-size: 11px; color: var(--text2); }
+  .leg span { display: flex; align-items: center; gap: 5px; }
+  .ld { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .wb { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; background: var(--amarillo-bg); color: var(--amarillo); padding: 4px 10px; border-radius: 5px; margin-bottom: 12px; }
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .nota { font-size: 11px; color: var(--text3); margin-top: 8px; font-style: italic; }
+  .hmw { overflow-x: auto; }
+  .hmg { display: grid; gap: 3px; }
+  .hml { color: var(--text2); display: flex; align-items: center; font-size: 11px; white-space: nowrap; padding-right: 8px; }
+  .hmc { height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 10px; }
+  .hmd { font-size: 9px; color: var(--text3); text-align: center; padding: 2px 0; }
+  .scards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .scard { background: var(--surface2); border-radius: 10px; padding: 14px 16px; }
+  .scard-title { font-size: 11px; color: var(--text3); margin-bottom: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+  .scard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; }
+  .scard-key { color: var(--text3); margin-bottom: 2px; }
+  .scard-val { font-weight: 500; font-size: 13px; }
+  .badge { padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 500; display: inline-block; }
+  .update-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; }
+  .update-bar label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+  .update-bar input[type=file] { font-size: 12px; color: var(--text2); }
+  .update-bar button { background: var(--text); color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+  .update-bar button:hover { opacity: 0.85; }
+  details summary { font-size: 12px; color: var(--text3); cursor: pointer; margin-bottom: 8px; }
+  textarea { width: 100%; height: 120px; font-size: 11px; font-family: monospace; border: 1px solid var(--border); border-radius: 6px; padding: 8px; background: var(--surface2); color: var(--text); resize: vertical; }
+  @media (max-width: 768px) {
+    .container { padding: 16px; }
+    .mg { grid-template-columns: repeat(2, 1fr); }
+    .g2 { grid-template-columns: 1fr; }
+    .scards { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Monitoreo deportivo</h1>
+    <p id="fecha-header">—</p>
+  </div>
+  <div style="text-align:right;">
+    <div id="estado-header" style="font-size:13px;font-weight:500;"></div>
+    <div id="alerta-header" style="font-size:11px;color:var(--text3);margin-top:2px;"></div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="section" style="margin-bottom:20px;">
+    <div class="sl">actualizar datos</div>
+    <details>
+      <summary>Pegar datos de Master_diario (TSV)</summary>
+      <textarea id="data-input" placeholder="Pegá el contenido de Master_diario acá (Ctrl+A, Ctrl+C desde Sheets)..."></textarea>
+      <button onclick="parsePaste()" style="margin-top:8px;background:var(--text);color:white;border:none;border-radius:6px;padding:8px 16px;font-size:12px;cursor:pointer;">Actualizar dashboard</button>
+    </details>
+  </div>
+
+  <div class="mg">
+    <div class="mc"><div class="ml">estado hoy</div><div class="mv" id="m-sem" style="color:var(--red-dark);">—</div><div class="ms" id="m-sem-sub">—</div></div>
+    <div class="mc"><div class="ml">AC ratio actual</div><div class="mv" id="m-ac">—</div><div class="ms">ref. segura &lt; 1.5</div></div>
+    <div class="mc"><div class="ml">carga media 7d</div><div class="mv" id="m-c7">—</div><div class="ms">UA promedio</div></div>
+    <div class="mc"><div class="ml">fatiga global hoy</div><div class="mv" id="m-fg">—</div><div class="ms">escala 0–30</div></div>
+  </div>
+
+  <div class="section">
+    <div class="sl">tabla de calor — estado diario</div>
+    <div class="hmw"><div id="heatmap"></div></div>
+  </div>
+
+  <div class="section">
+    <div class="sl">carga interna — suavizado 7 días</div>
+    <div class="wb">⚠ outliers: días con RPE &gt; 0 y minutos = 0 se muestran en naranja</div>
+    <div class="leg">
+      <span><span class="ld" style="background:rgba(55,138,221,0.4);"></span>Carga diaria</span>
+      <span><span class="ld" style="background:#EF9F27;"></span>Outlier</span>
+      <span><span class="ld" style="background:#185FA5;"></span>Media móvil 7d</span>
+    </div>
+    <div style="position:relative;width:100%;height:250px;"><canvas id="c1" role="img" aria-label="Carga interna diaria">Carga interna.</canvas></div>
+  </div>
+
+  <div class="g2">
+    <div class="section">
+      <div class="sl">AC ratio</div>
+      <div class="leg"><span><span class="ld" style="background:#1D9E75;"></span>AC ratio</span><span><span class="ld" style="background:rgba(226,75,74,0.2);border:1px solid #E24B4A;"></span>zona riesgo &gt;1.5</span></div>
+      <div style="position:relative;width:100%;height:200px;"><canvas id="c2" role="img" aria-label="AC ratio">AC ratio.</canvas></div>
+      <div class="nota">* Se estabiliza con 28 días de histórico.</div>
+    </div>
+    <div class="section">
+      <div class="sl">fatiga global — media móvil 5 días</div>
+      <div class="leg"><span><span class="ld" style="background:rgba(226,75,74,0.4);"></span>Diaria</span><span><span class="ld" style="background:#A32D2D;"></span>Media 5d</span><span><span class="ld" style="background:rgba(186,117,23,0.2);border:1px solid #BA7517;"></span>&gt; 8</span></div>
+      <div style="position:relative;width:100%;height:200px;"><canvas id="c3" role="img" aria-label="Fatiga global">Fatiga global.</canvas></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sl">monotonía y strain semanal</div>
+    <div class="leg">
+      <span><span class="ld" style="background:rgba(83,74,183,0.4);"></span>Strain semanal</span>
+      <span><span class="ld" style="background:#534AB7;"></span>Monotonía</span>
+      <span><span class="ld" style="background:rgba(226,75,74,0.15);border:1px solid #E24B4A;"></span>riesgo &gt;2</span>
+    </div>
+    <div style="position:relative;width:100%;height:210px;"><canvas id="c4" role="img" aria-label="Monotonía y strain">Monotonía y strain.</canvas></div>
+  </div>
+
+  <div class="section">
+    <div class="sl">dispersión — carga vs fatiga día siguiente</div>
+    <div class="leg"><span><span class="ld" style="background:#378ADD;"></span>Día normal</span><span><span class="ld" style="background:#E24B4A;"></span>Día con partido</span></div>
+    <div style="position:relative;width:100%;height:260px;"><canvas id="c5" role="img" aria-label="Dispersión carga vs fatiga D+1">Dispersión.</canvas></div>
+    <div class="nota">* Eje X = carga del día. Eje Y = fatiga global del día siguiente.</div>
+  </div>
+
+  <div class="section">
+    <div class="sl">curvas de recuperación post-partido</div>
+    <div class="leg" id="leg-rec"></div>
+    <div style="position:relative;width:100%;height:240px;"><canvas id="c6" role="img" aria-label="Recuperación post-partido">Recuperación post-partido.</canvas></div>
+    <div class="nota">* Día 0 = partido. Días 1–3 = recuperación. Fatiga global simple.</div>
+  </div>
+
+  <div class="section">
+    <div class="sl">perfil de dolor por zona — media móvil 5 días</div>
+    <div class="leg">
+      <span><span class="ld" style="background:#E24B4A;"></span>Aductor (max AM/PM)</span>
+      <span><span class="ld" style="background:#534AB7;"></span>Gemelo/sóleo (max AM/PM)</span>
+      <span><span class="ld" style="background:#1D9E75;"></span>Cuádriceps distal (max AM/PM)</span>
+    </div>
+    <div style="position:relative;width:100%;height:220px;"><canvas id="c7" role="img" aria-label="Perfil de dolor por zona">Perfil de dolor.</canvas></div>
+  </div>
+
+  <div class="section">
+    <div class="sl">resumen semanal</div>
+    <div class="scards" id="scards"></div>
+  </div>
+
+</div>
+
+<script>
+let charts = {};
+
+const defaultData = [
+  {f:'18/04',sem:1,carga:385,rpe:7,fatiga:3,sc:'VERDE',alerta:'OK',partido:1,tieneAM:1,ac:1.00,ca7:385,amax:0,gmax:0,qmax:0},
+  {f:'20/04',sem:2,carga:0,rpe:0,fatiga:7,sc:'VERDE',alerta:'OK',partido:0,tieneAM:1,ac:1.00,ca7:193,amax:0,gmax:0,qmax:0},
+  {f:'21/04',sem:2,carga:240,rpe:8,fatiga:9,sc:'AMARILLO',alerta:'OK',partido:0,tieneAM:1,ac:1.00,ca7:208,amax:3,gmax:1,qmax:2,outlier:true},
+  {f:'22/04',sem:2,carga:1440,rpe:9,fatiga:13,sc:'ROJO',alerta:'OK',partido:1,tieneAM:1,ac:1.00,ca7:516,amax:3,gmax:1,qmax:6},
+  {f:'23/04',sem:2,carga:1200,rpe:8,fatiga:12,sc:'ROJO',alerta:'ALERTA',partido:1,tieneAM:1,ac:1.00,ca7:653,amax:3,gmax:1,qmax:3},
+  {f:'25/04',sem:3,carga:282,rpe:6,fatiga:5,sc:'VERDE',alerta:'ALERTA',partido:1,tieneAM:1,ac:1.07,ca7:632,amax:1,gmax:0,qmax:0},
+  {f:'26/04',sem:3,carga:1350,rpe:9,fatiga:null,sc:null,alerta:null,partido:0,tieneAM:0,ac:1.07,ca7:752,amax:2,gmax:0,qmax:0},
+  {f:'27/04',sem:3,carga:0,rpe:0,fatiga:8,sc:'AMARILLO',alerta:'OK',partido:0,tieneAM:1,ac:1.23,ca7:752,amax:0,gmax:0,qmax:0},
+  {f:'29/04',sem:4,carga:1350,rpe:9,fatiga:9,sc:'ROJO',alerta:'OK',partido:1,tieneAM:1,ac:1.20,ca7:836,amax:3,gmax:2,qmax:4},
+  {f:'30/04',sem:4,carga:160,rpe:8,fatiga:12,sc:'ROJO',alerta:'ALERTA',partido:1,tieneAM:1,ac:0.98,ca7:628,amax:3,gmax:2,qmax:5,outlier:true},
+  {f:'02/05',sem:5,carga:630,rpe:9,fatiga:5,sc:'VERDE',alerta:'ALERTA',partido:1,tieneAM:1,ac:1.09,ca7:698,amax:3,gmax:3,qmax:7},
+  {f:'04/05',sem:5,carga:630,rpe:7,fatiga:9,sc:'ROJO',alerta:'ALERTA',partido:0,tieneAM:1,ac:1.08,ca7:693,amax:3,gmax:2,qmax:5},
+  {f:'05/05',sem:5,carga:0,rpe:0,fatiga:7,sc:'AMARILLO',alerta:'ALERTA',partido:0,tieneAM:1,ac:0.94,ca7:554,amax:0,gmax:0,qmax:0},
+  {f:'06/05',sem:5,carga:0,rpe:0,fatiga:10,sc:'ROJO',alerta:'ALERTA',partido:0,tieneAM:1,ac:0.52,ca7:284,amax:0,gmax:0,qmax:0},
+];
+
+function parsePaste() {
+  const raw = document.getElementById('data-input').value.trim();
+  if (!raw) return;
+  const lines = raw.split('\n').filter(l => l.trim());
+  const headers = lines[0].split('\t').map(h => h.trim());
+  const rows = lines.slice(1);
+
+  const idx = (name) => headers.findIndex(h => h === name);
+  const iF = idx('Fecha'), iC = idx('Carga_interna'), iR = idx('RPE_PM'),
+        iM = idx('Minutos_totales_PM'), iFg = idx('Fatiga_global_simple'),
+        iAC = idx('AC_ratio'), iCA7 = idx('Carga_aguda_7d'),
+        iAmax = idx('Aductor_max'), iGmax = idx('Gemelo_max'), iQmax = idx('Cuad_max'),
+        iPart = idx('Dia_partido'), iAM = idx('Horas_sueno');
+
+  const parsed = rows.map((line, si) => {
+    const c = line.split('\t');
+    const fecha = (c[iF]||'').trim();
+    if (!fecha) return null;
+    const parts = fecha.split('-');
+    const fLabel = parts.length === 3 ? `${parts[2]}/${parts[1]}` : fecha;
+    const carga = parseFloat((c[iC]||'0').replace(',','.')) || 0;
+    const rpe = parseFloat((c[iR]||'0').replace(',','.')) || 0;
+    const minutos = parseFloat((c[iM]||'0').replace(',','.')) || 0;
+    const fatiga = c[iFg] && c[iFg].trim() !== '' ? parseFloat(c[iFg].replace(',','.')) : null;
+    const ac = parseFloat((c[iAC]||'1').replace(',','.')) || 1;
+    const ca7 = parseFloat((c[iCA7]||'0').replace(',','.')) || 0;
+    const amax = parseFloat((c[iAmax]||'0').replace(',','.')) || 0;
+    const gmax = parseFloat((c[iGmax]||'0').replace(',','.')) || 0;
+    const qmax = parseFloat((c[iQmax]||'0').replace(',','.')) || 0;
+    const partido = parseInt(c[iPart]||'0') || 0;
+    const tieneAM = iAM >= 0 ? (c[iAM] && c[iAM].trim() !== '' ? 1 : 0) : 1;
+    const outlier = rpe > 0 && minutos === 0;
+    return {f:fLabel, sem:Math.ceil((si+1)/7), carga, rpe, fatiga, sc:null, alerta:null, partido, tieneAM, ac, ca7, amax, gmax, qmax, outlier};
+  }).filter(Boolean);
+
+  if (parsed.length > 0) buildDashboard(parsed);
+}
+
+function interp(arr) {
+  const r = [...arr];
+  for (let i = 0; i < r.length; i++) {
+    if (r[i] === null) {
+      let pv=null,nv=null,pi=-1,ni=-1;
+      for (let j=i-1;j>=0;j--) { if(r[j]!==null){pv=r[j];pi=j;break;} }
+      for (let j=i+1;j<r.length;j++) { if(r[j]!==null){nv=r[j];ni=j;break;} }
+      if (pv!==null&&nv!==null) r[i]=Math.round(pv+(nv-pv)*(i-pi)/(ni-pi));
+      else if (pv!==null) r[i]=pv;
+      else if (nv!==null) r[i]=nv;
+    }
+  }
+  return r;
+}
+
+function ma(arr, w) {
+  return arr.map((v,i) => {
+    const sl = arr.slice(Math.max(0,i-w+1),i+1).filter(x=>x!==null);
+    return sl.length ? Math.round(sl.reduce((a,b)=>a+b,0)/sl.length) : null;
+  });
+}
+
+function destroyAll() {
+  Object.values(charts).forEach(c => c.destroy());
+  charts = {};
+}
+
+function buildDashboard(D) {
+  destroyAll();
+
+  const labels = D.map(d=>d.f);
+  const gc = 'rgba(0,0,0,0.06)';
+  const tc = '#999794';
+
+  const last = D[D.length-1];
+  const cSem = {VERDE:'#3B6D11',AMARILLO:'#854F0B',ROJO:'#791F1F'};
+  const bSem = {VERDE:'#EAF3DE',AMARILLO:'#FAEEDA',ROJO:'#FCEBEB'};
+
+  document.getElementById('fecha-header').textContent = `Último registro: ${last.f}`;
+  if (last.sc) {
+    document.getElementById('m-sem').textContent = last.sc;
+    document.getElementById('m-sem').style.color = cSem[last.sc] || '#1a1a1a';
+    document.getElementById('m-sem-sub').textContent = last.alerta === 'ALERTA' ? 'alerta tendencia activa' : 'sin alerta de tendencia';
+    document.getElementById('estado-header').textContent = last.sc;
+    document.getElementById('estado-header').style.color = cSem[last.sc];
+    document.getElementById('alerta-header').textContent = last.alerta === 'ALERTA' ? 'tendencia acumulada activa' : '';
+  } else {
+    document.getElementById('m-sem').textContent = 'Sin AM';
+    document.getElementById('estado-header').textContent = 'Sin dato AM hoy';
+  }
+  document.getElementById('m-ac').textContent = last.ac ? last.ac.toFixed(2) : '—';
+  document.getElementById('m-ac').style.color = last.ac > 1.5 ? '#A32D2D' : '#1a1a1a';
+  document.getElementById('m-c7').textContent = Math.round(last.ca7) + ' UA';
+  document.getElementById('m-fg').textContent = last.fatiga ?? '—';
+
+  const fatigaRaw = D.map(d=>d.fatiga);
+  const fatigaI = interp(fatigaRaw);
+  const cargaI = D.map(d=>d.carga);
+  const ma7c = ma(cargaI, 7);
+  const ma5f = ma(fatigaI, 5);
+
+  const hm = document.getElementById('heatmap');
+  const cols = D.length;
+  let g = `<div class="hmg" style="grid-template-columns:90px repeat(${cols},1fr);min-width:${90+cols*44}px;gap:3px;">`;
+  g += '<div></div>';
+  D.forEach(d => { g += `<div class="hmd">${d.f}</div>`; });
+  [['semáforo',0],['tendencia',1],['partido',2]].forEach(([row,ri]) => {
+    g += `<div class="hml">${row}</div>`;
+    D.forEach(d => {
+      if (ri===0) {
+        if (!d.sc) { g+=`<div class="hmc" style="background:#f1f0ec;color:#bbb;">∅</div>`; return; }
+        const l = d.sc==='VERDE'?'V':d.sc==='AMARILLO'?'A':'R';
+        g += `<div class="hmc" style="background:${bSem[d.sc]};color:${cSem[d.sc]};">${l}</div>`;
+      } else if (ri===1) {
+        if (!d.alerta) { g+=`<div class="hmc" style="background:#f1f0ec;color:#bbb;">∅</div>`; return; }
+        const a = d.alerta==='ALERTA';
+        g += `<div class="hmc" style="background:${a?'#FCEBEB':'#f1f0ec'};color:${a?'#A32D2D':'#bbb'};">${a?'!':'✓'}</div>`;
+      } else {
+        g += `<div class="hmc" style="background:${d.partido?'#E6F1FB':'#f1f0ec'};color:${d.partido?'#185FA5':'#bbb'};">${d.partido?'P':'—'}</div>`;
+      }
+    });
+  });
+  g += '</div>';
+  hm.innerHTML = g;
+
+  charts.c1 = new Chart(document.getElementById('c1'), {
+    data:{labels,datasets:[
+      {type:'bar',label:'Carga diaria',data:D.map(d=>d.outlier?null:d.carga),backgroundColor:'rgba(55,138,221,0.3)',borderColor:'#378ADD',borderWidth:1,borderRadius:3,yAxisID:'y'},
+      {type:'bar',label:'Outlier',data:D.map(d=>d.outlier?d.carga:null),backgroundColor:'rgba(239,159,39,0.5)',borderColor:'#BA7517',borderWidth:1,borderRadius:3,yAxisID:'y'},
+      {type:'line',label:'Media 7d',data:ma7c,borderColor:'#185FA5',borderWidth:2.5,pointRadius:0,tension:0.4,yAxisID:'y',spanGaps:true},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
+      if(ctx.dataset.label==='Outlier') return `⚠ ${ctx.parsed.y} UA — outlier detectado`;
+      return `${ctx.dataset.label}: ${ctx.parsed.y} UA`;
+    }}}},scales:{
+      x:{ticks:{color:tc,font:{size:11},autoSkip:false,maxRotation:45},grid:{color:gc}},
+      y:{ticks:{color:tc,font:{size:11}},grid:{color:gc},title:{display:true,text:'UA',color:tc,font:{size:10}}}
+    }}
+  });
+
+  charts.c2 = new Chart(document.getElementById('c2'), {
+    type:'line',data:{labels,datasets:[
+      {label:'AC ratio',data:D.map(d=>d.ac),borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.07)',borderWidth:2,pointRadius:4,pointBackgroundColor:D.map(d=>d.ac>1.5?'#E24B4A':'#1D9E75'),tension:0.3,spanGaps:true},
+      {label:'Límite',data:Array(D.length).fill(1.5),borderColor:'rgba(226,75,74,0.5)',borderWidth:1,borderDash:[5,4],pointRadius:0,fill:{target:{value:1.5},above:'rgba(226,75,74,0.06)'}},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      x:{ticks:{color:tc,font:{size:11},autoSkip:false,maxRotation:45},grid:{color:gc}},
+      y:{min:0,max:2,ticks:{color:tc,font:{size:11}},grid:{color:gc}}
+    }}
+  });
+
+  charts.c3 = new Chart(document.getElementById('c3'), {
+    type:'line',data:{labels,datasets:[
+      {label:'Fatiga diaria',data:fatigaRaw,borderColor:'rgba(226,75,74,0.6)',borderWidth:1.5,pointRadius:3,pointBackgroundColor:'rgba(226,75,74,0.7)',tension:0.2,spanGaps:false},
+      {label:'Interpolado',data:D.map((d,i)=>d.fatiga===null?fatigaI[i]:null),borderColor:'rgba(226,75,74,0.4)',borderWidth:1.5,borderDash:[4,3],pointRadius:3,tension:0.2,spanGaps:true},
+      {label:'Media 5d',data:ma5f,borderColor:'#A32D2D',borderWidth:2.5,pointRadius:0,tension:0.4,spanGaps:true},
+      {label:'Umbral',data:Array(D.length).fill(8),borderColor:'rgba(186,117,23,0.4)',borderWidth:1,borderDash:[5,4],pointRadius:0,fill:{target:{value:8},above:'rgba(186,117,23,0.06)'}},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      x:{ticks:{color:tc,font:{size:11},autoSkip:false,maxRotation:45},grid:{color:gc}},
+      y:{min:0,max:16,ticks:{color:tc,font:{size:11}},grid:{color:gc}}
+    }}
+  });
+
+  const semanas = [...new Set(D.map(d=>d.sem))];
+  const monoData = semanas.map(s => {
+    const dias = D.filter(d=>d.sem===s);
+    const cargas = dias.map(d=>d.carga);
+    const med = cargas.reduce((a,b)=>a+b,0)/cargas.length;
+    const std = Math.sqrt(cargas.map(c=>Math.pow(c-med,2)).reduce((a,b)=>a+b,0)/cargas.length);
+    const mono = std===0?0:parseFloat((med/std).toFixed(2));
+    const strain = Math.round(med*cargas.length*mono);
+    return {sem:s,mono,strain,rojos:dias.filter(d=>d.sc==='ROJO').length,partidos:dias.filter(d=>d.partido).length,cargaTotal:cargas.reduce((a,b)=>a+b,0)};
+  });
+
+  charts.c4 = new Chart(document.getElementById('c4'), {
+    data:{labels:semanas.map((_,i)=>`Sem ${i+1}`),datasets:[
+      {type:'bar',label:'Strain',data:monoData.map(d=>d.strain),backgroundColor:'rgba(83,74,183,0.3)',borderColor:'#534AB7',borderWidth:1,borderRadius:3,yAxisID:'yS'},
+      {type:'line',label:'Monotonía',data:monoData.map(d=>d.mono),borderColor:'#534AB7',borderWidth:2.5,pointRadius:5,pointBackgroundColor:monoData.map(d=>d.mono>2?'#E24B4A':'#534AB7'),tension:0.3,yAxisID:'yM'},
+      {type:'line',label:'Límite',data:Array(semanas.length).fill(2),borderColor:'rgba(226,75,74,0.5)',borderWidth:1,borderDash:[5,4],pointRadius:0,yAxisID:'yM'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      x:{ticks:{color:tc,font:{size:11}},grid:{color:gc}},
+      yS:{position:'left',ticks:{color:tc,font:{size:11}},grid:{color:gc},title:{display:true,text:'Strain',color:tc,font:{size:10}}},
+      yM:{position:'right',min:0,max:4,ticks:{color:'#534AB7',font:{size:11}},grid:{display:false},title:{display:true,text:'Monotonía',color:'#534AB7',font:{size:10}}},
+    }}
+  });
+
+  const pDisp = [];
+  D.forEach((d,i) => {
+    if (i<D.length-1 && d.carga>0 && !d.outlier) {
+      const fs = fatigaI[i+1];
+      if (fs!==null) pDisp.push({x:d.carga,y:fs,partido:d.partido});
+    }
+  });
+  charts.c5 = new Chart(document.getElementById('c5'), {
+    type:'scatter',data:{datasets:[
+      {label:'Día normal',data:pDisp.filter(p=>!p.partido).map(p=>({x:p.x,y:p.y})),backgroundColor:'rgba(55,138,221,0.7)',pointRadius:6,pointHoverRadius:8},
+      {label:'Día con partido',data:pDisp.filter(p=>p.partido).map(p=>({x:p.x,y:p.y})),backgroundColor:'rgba(226,75,74,0.7)',pointRadius:6,pointHoverRadius:8,pointStyle:'triangle'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`Carga: ${ctx.parsed.x} UA → Fatiga D+1: ${ctx.parsed.y}`}}},layout:{padding:20},scales:{
+      x:{ticks:{color:tc,font:{size:11}},grid:{color:gc},title:{display:true,text:'Carga interna (UA)',color:tc,font:{size:10}}},
+      y:{min:0,max:16,ticks:{color:tc,font:{size:11}},grid:{color:gc},title:{display:true,text:'Fatiga global día siguiente',color:tc,font:{size:10}}},
+    }}
+  });
+
+  const pIdx = D.map((d,i)=>d.partido?i:-1).filter(i=>i>=0);
+  const colP = ['#378ADD','#1D9E75','#534AB7','#E24B4A','#BA7517','#639922','#A32D2D'];
+  const recDS = pIdx.map((pi,idx) => {
+    const pts = [];
+    for (let d=0;d<=3;d++) {
+      const ri = pi+d;
+      if (ri<D.length && fatigaI[ri]!==null) pts.push({x:d,y:fatigaI[ri]});
+    }
+    return {label:`Partido ${D[pi].f}`,data:pts,borderColor:colP[idx%colP.length],backgroundColor:'transparent',borderWidth:1.5,pointRadius:4,tension:0.3};
+  });
+  const lr = document.getElementById('leg-rec');
+  lr.innerHTML = '';
+  recDS.forEach(ds => {
+    const s = document.createElement('span');
+    s.style.cssText = 'display:flex;align-items:center;gap:5px;font-size:11px;color:#666560;';
+    s.innerHTML = `<span style="width:10px;height:10px;border-radius:2px;background:${ds.borderColor};display:inline-block;"></span>${ds.label}`;
+    lr.appendChild(s);
+  });
+  charts.c6 = new Chart(document.getElementById('c6'), {
+    type:'line',data:{datasets:recDS},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      x:{type:'linear',min:0,max:3,ticks:{color:tc,font:{size:11},stepSize:1,callback:v=>['Partido','D+1','D+2','D+3'][v]??v},grid:{color:gc},title:{display:true,text:'días post-partido',color:tc,font:{size:10}}},
+      y:{min:0,max:16,ticks:{color:tc,font:{size:11}},grid:{color:gc},title:{display:true,text:'fatiga global',color:tc,font:{size:10}}},
+    }}
+  });
+
+  const amx = ma(interp(D.map(d=>d.amax)), 5);
+  const gmx = ma(interp(D.map(d=>d.gmax)), 5);
+  const qmx = ma(interp(D.map(d=>d.qmax)), 5);
+  charts.c7 = new Chart(document.getElementById('c7'), {
+    type:'line',data:{labels,datasets:[
+      {label:'Aductor',data:amx,borderColor:'#E24B4A',backgroundColor:'rgba(226,75,74,0.07)',borderWidth:2,pointRadius:3,tension:0.4,fill:true,spanGaps:true},
+      {label:'Gemelo',data:gmx,borderColor:'#534AB7',backgroundColor:'rgba(83,74,183,0.06)',borderWidth:2,pointRadius:3,tension:0.4,fill:true,spanGaps:true},
+      {label:'Cuádriceps',data:qmx,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.06)',borderWidth:2,pointRadius:3,tension:0.4,fill:true,spanGaps:true},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      x:{ticks:{color:tc,font:{size:11},autoSkip:false,maxRotation:45},grid:{color:gc}},
+      y:{min:0,max:8,ticks:{color:tc,font:{size:11}},grid:{color:gc},title:{display:true,text:'0–10',color:tc,font:{size:10}}},
+    }}
+  });
+
+  const sc = document.getElementById('scards');
+  sc.innerHTML = monoData.map((s,i) => {
+    const mc = s.mono>2?'#791F1F':s.mono>1.5?'#854F0B':'#3B6D11';
+    const mb = s.mono>2?'#FCEBEB':s.mono>1.5?'#FAEEDA':'#EAF3DE';
+    return `<div class="scard">
+      <div class="scard-title">Semana ${i+1}</div>
+      <div class="scard-grid">
+        <div><div class="scard-key">Carga total</div><div class="scard-val">${s.cargaTotal.toLocaleString()} UA</div></div>
+        <div><div class="scard-key">Partidos</div><div class="scard-val">${s.partidos}</div></div>
+        <div><div class="scard-key">Días rojo</div><div class="scard-val" style="color:${s.rojos>0?'#A32D2D':'inherit'};">${s.rojos}</div></div>
+        <div><div class="scard-key">Monotonía</div><div class="scard-val"><span class="badge" style="background:${mb};color:${mc};">${s.mono.toFixed(2)}</span></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+buildDashboard(defaultData);
+</script>
+</body>
+</html>
