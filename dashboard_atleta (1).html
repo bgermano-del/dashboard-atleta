@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Monitoreo Atleta</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg:#191919;--surface:#202020;--surface2:#272727;--border:rgba(255,255,255,0.07);
+    --text:#e8e6e1;--text2:#9b9894;--text3:#6b6966;
+    --verde:#6db33f;--verde-bg:#1e2d14;
+    --amarillo:#d4a049;--amarillo-bg:#2c2210;
+    --rojo:#d95f5f;--rojo-bg:#2c1414;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.5;}
+  header{padding:32px 40px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;}
+  header h1{font-size:20px;font-weight:500;letter-spacing:-0.02em;}
+  header p{font-size:12px;color:var(--text3);}
+  .wrap{max-width:1200px;margin:0 auto;padding:32px 40px;}
+  .mg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px;}
+  .mc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
+  .ml{font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;}
+  .mv{font-size:26px;font-weight:500;letter-spacing:-0.02em;}
+  .ms{font-size:11px;color:var(--text3);margin-top:3px;}
+  .sec{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;}
+  .sl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:16px;font-weight:500;}
+  .leg{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:14px;font-size:11px;color:var(--text2);}
+  .leg span{display:flex;align-items:center;gap:5px;}
+  .ld{width:10px;height:10px;border-radius:2px;display:inline-block;}
+  .wb{display:inline-flex;align-items:center;gap:6px;font-size:11px;background:var(--amarillo-bg);color:var(--amarillo);padding:4px 10px;border-radius:5px;margin-bottom:12px;}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+  .nota{font-size:11px;color:var(--text3);margin-top:8px;font-style:italic;}
+  .hmw{overflow-x:auto;}
+  .hmg{display:grid;gap:3px;}
+  .hml{color:var(--text2);display:flex;align-items:center;font-size:11px;white-space:nowrap;padding-right:8px;}
+  .hmc{height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:10px;}
+  .hmd{font-size:9px;color:var(--text3);text-align:center;padding:2px 0;}
+  .scards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+  .scard{background:var(--surface2);border-radius:10px;padding:14px 16px;}
+  .sk{font-size:11px;color:var(--text3);margin-bottom:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;}
+  .sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;}
+  .sv{font-weight:500;font-size:13px;}
+  .badge{padding:2px 7px;border-radius:4px;font-size:11px;font-weight:500;display:inline-block;}
+  details summary{font-size:12px;color:var(--text3);cursor:pointer;margin-bottom:8px;}
+  textarea{width:100%;height:120px;font-size:11px;font-family:monospace;border:1px solid var(--border);border-radius:6px;padding:8px;background:var(--surface2);color:var(--text);resize:vertical;}
+  .btn{background:var(--text);color:var(--bg);border:none;border-radius:6px;padding:8px 16px;font-size:12px;cursor:pointer;margin-top:8px;}
+  .btn:hover{opacity:0.85;}
+  @media(max-width:768px){.wrap{padding:16px;}.mg{grid-template-columns:repeat(2,1fr);}.g2{grid-template-columns:1fr;}.scards{grid-template-columns:repeat(2,1fr);}}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+<header>
+  <div><h1>Monitoreo deportivo</h1><p id="fh">—</p></div>
+  <div style="text-align:right;"><div id="eh" style="font-size:13px;font-weight:500;"></div><div id="ah" style="font-size:11px;color:var(--text3);margin-top:2px;"></div></div>
+</header>
+<div class="wrap">
+  <div class="sec" style="margin-bottom:20px;">
+    <div class="sl">actualizar datos</div>
+    <details><summary>Pegar datos de Master_diario (Ctrl+A, Ctrl+C desde Sheets)</summary>
+      <textarea id="di" placeholder="Pegá el contenido de Master_diario acá..."></textarea>
+      <button class="btn" onclick="parsePaste()">Actualizar dashboard</button>
+    </details>
+  </div>
+  <div class="mg">
+    <div class="mc"><div class="ml">estado hoy</div><div class="mv" id="ms">—</div><div class="ms" id="mss">—</div></div>
+    <div class="mc"><div class="ml">AC ratio actual</div><div class="mv" id="mac">—</div><div class="ms">ref. segura &lt;1.5</div></div>
+    <div class="mc"><div class="ml">carga media 7d</div><div class="mv" id="mc7">—</div><div class="ms">UA promedio</div></div>
+    <div class="mc"><div class="ml">fatiga global hoy</div><div class="mv" id="mfg">—</div><div class="ms">escala 0–30</div></div>
+  </div>
+  <div class="sec"><div class="sl">tabla de calor — estado diario</div><div class="hmw"><div id="hm"></div></div></div>
+  <div class="sec">
+    <div class="sl">carga interna — suavizado 7 días</div>
+    <div class="wb">⚠ outliers: días con RPE &gt; 0 y minutos = 0 se muestran en naranja</div>
+    <div class="leg"><span><span class="ld" style="background:rgba(77,157,224,0.4);"></span>Carga diaria</span><span><span class="ld" style="background:#e8a830;"></span>Outlier</span><span><span class="ld" style="background:#3a7fc1;"></span>Media móvil 7d</span></div>
+    <div style="position:relative;width:100%;height:250px;"><canvas id="c1" role="img" aria-label="Carga interna diaria">Carga interna.</canvas></div>
+  </div>
+  <div class="g2">
+    <div class="sec">
+      <div class="sl">AC ratio</div>
+      <div class="leg"><span><span class="ld" style="background:#2ab87f;"></span>AC ratio</span><span><span class="ld" style="background:rgba(224,85,85,0.2);border:1px solid #e05555;"></span>zona riesgo &gt;1.5</span></div>
+      <div style="position:relative;width:100%;height:200px;"><canvas id="c2" role="img" aria-label="AC ratio">AC ratio.</canvas></div>
+      <div class="nota">* Se estabiliza con 28 días de histórico.</div>
+    </div>
+    <div class="sec">
+      <div class="sl">fatiga global — media móvil 5 días</div>
+      <div class="leg"><span><span class="ld" style="background:rgba(224,85,85,0.4);"></span>Diaria</span><span><span class="ld" style="background:#c43c3c;"></span>Media 5d</span><span><span class="ld" style="background:rgba(232,168,48,0.2);border:1px solid #e8a830;"></span>&gt;8</span></div>
+      <div style="position:relative;width:100%;height:200px;"><canvas id="c3" role="img" aria-label="Fatiga global">Fatiga global.</canvas></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sl">monotonía y strain semanal</div>
+    <div class="leg"><span><span class="ld" style="background:rgba(124,114,216,0.4);"></span>Strain</span><span><span class="ld" style="background:#7c72d8;"></span>Monotonía</span><span><span class="ld" style="background:rgba(224,85,85,0.15);border:1px solid #e05555;"></span>riesgo &gt;2</span></div>
+    <div style="position:relative;width:100%;height:210px;"><canvas id="c4" role="img" aria-label="Monotonía y strain">Monotonía y strain.</canvas></div>
+  </div>
+  <div class="sec">
+    <div class="sl">dispersión — carga vs fatiga día siguiente</div>
+    <div class="leg"><span><span class="ld" style="background:#4d9de0;"></span>Día normal</span><span><span class="ld" style="background:#e05555;"></span>Día con partido</span></div>
+    <div style="position:relative;width:100%;height:260px;"><canvas id="c5" role="img" aria-label="Dispersión carga vs fatiga D+1">Dispersión.</canvas></div>
+    <div class="nota">* Eje X = carga del día. Eje Y = fatiga global del día siguiente.</div>
+  </div>
+  <div class="sec">
+    <div class="sl">curvas de recuperación post-partido</div>
+    <div class="leg" id="lr"></div>
+    <div style="position:relative;width:100%;height:240px;"><canvas id="c6" role="img" aria-label="Recuperación post-partido">Recuperación post-partido.</canvas></div>
+    <div class="nota">* Día 0 = partido. Días 1–3 = recuperación. Fatiga global simple.</div>
+  </div>
+  <div class="sec">
+    <div class="sl">perfil de dolor por zona — media móvil 5 días</div>
+    <div class="leg"><span><span class="ld" style="background:#e05555;"></span>Aductor</span><span><span class="ld" style="background:#7c72d8;"></span>Gemelo/sóleo</span><span><span class="ld" style="background:#2ab87f;"></span>Cuádriceps distal</span></div>
+    <div style="position:relative;width:100%;height:220px;"><canvas id="c7" role="img" aria-label="Perfil de dolor por zona">Perfil de dolor.</canvas></div>
+  </div>
+  <div class="sec"><div class="sl">resumen semanal</div><div class="scards" id="sc"></div></div>
+</div>
+<script>
+let CH={};
+const DD=[
+  {f:'18/04',sem:1,carga:385,rpe:7,fatiga:3,s:'VERDE',al:'OK',p:1,ac:1.00,ca7:385,am:0,gm:0,qm:0},
+  {f:'20/04',sem:2,carga:0,rpe:0,fatiga:7,s:'VERDE',al:'OK',p:0,ac:1.00,ca7:193,am:0,gm:0,qm:0},
+  {f:'21/04',sem:2,carga:240,rpe:8,fatiga:9,s:'AMARILLO',al:'OK',p:0,ac:1.00,ca7:208,am:3,gm:1,qm:2,out:true},
+  {f:'22/04',sem:2,carga:1440,rpe:9,fatiga:13,s:'ROJO',al:'OK',p:1,ac:1.00,ca7:516,am:3,gm:1,qm:6},
+  {f:'23/04',sem:2,carga:1200,rpe:8,fatiga:12,s:'ROJO',al:'ALERTA',p:1,ac:1.00,ca7:653,am:3,gm:1,qm:3},
+  {f:'25/04',sem:3,carga:282,rpe:6,fatiga:5,s:'VERDE',al:'ALERTA',p:1,ac:1.07,ca7:632,am:1,gm:0,qm:0},
+  {f:'26/04',sem:3,carga:1350,rpe:9,fatiga:null,s:null,al:null,p:0,ac:1.07,ca7:752,am:2,gm:0,qm:0},
+  {f:'27/04',sem:3,carga:0,rpe:0,fatiga:8,s:'AMARILLO',al:'OK',p:0,ac:1.23,ca7:752,am:0,gm:0,qm:0},
+  {f:'29/04',sem:4,carga:1350,rpe:9,fatiga:9,s:'ROJO',al:'OK',p:1,ac:1.20,ca7:836,am:3,gm:2,qm:4},
+  {f:'30/04',sem:4,carga:160,rpe:8,fatiga:12,s:'ROJO',al:'ALERTA',p:1,ac:0.98,ca7:628,am:3,gm:2,qm:5,out:true},
+  {f:'02/05',sem:5,carga:630,rpe:9,fatiga:5,s:'VERDE',al:'ALERTA',p:1,ac:1.09,ca7:698,am:3,gm:3,qm:7},
+  {f:'04/05',sem:5,carga:630,rpe:7,fatiga:9,s:'ROJO',al:'ALERTA',p:0,ac:1.08,ca7:693,am:3,gm:2,qm:5},
+  {f:'05/05',sem:5,carga:0,rpe:0,fatiga:7,s:'AMARILLO',al:'ALERTA',p:0,ac:0.94,ca7:554,am:0,gm:0,qm:0},
+  {f:'06/05',sem:5,carga:0,rpe:0,fatiga:10,s:'ROJO',al:'ALERTA',p:0,ac:0.52,ca7:284,am:0,gm:0,qm:0},
+];
+function parsePaste(){
+  const raw=document.getElementById('di').value.trim();
+  if(!raw)return;
+  const lines=raw.split('\n').filter(l=>l.trim());
+  const hdr=lines[0].split('\t').map(h=>h.trim());
+  const idx=n=>hdr.findIndex(h=>h===n);
+  const iF=idx('Fecha'),iC=idx('Carga_interna'),iR=idx('RPE_PM'),iM=idx('Minutos_totales_PM'),
+        iFg=idx('Fatiga_global_simple'),iAC=idx('AC_ratio'),iCA7=idx('Carga_aguda_7d'),
+        iAm=idx('Aductor_max'),iGm=idx('Gemelo_max'),iQm=idx('Cuad_max'),
+        iP=idx('Dia_partido'),iH=idx('Horas_sueno');
+  const parsed=lines.slice(1).map((line,si)=>{
+    const c=line.split('\t');
+    const fecha=(c[iF]||'').trim();if(!fecha)return null;
+    const pts=fecha.split('-');
+    const f=pts.length===3?`${pts[2]}/${pts[1]}`:fecha;
+    const n=s=>parseFloat((c[s]||'0').replace(',','.'))||0;
+    const carga=n(iC),rpe=n(iR),minutos=n(iM);
+    const fatiga=c[iFg]&&c[iFg].trim()!==''?parseFloat(c[iFg].replace(',','.')):null;
+    return {f,sem:Math.ceil((si+1)/7),carga,rpe,fatiga,s:null,al:null,p:parseInt(c[iP]||'0')||0,
+      ac:parseFloat((c[iAC]||'1').replace(',','.'))||1,ca7:n(iCA7),
+      am:n(iAm),gm:n(iGm),qm:n(iQm),out:rpe>0&&minutos===0};
+  }).filter(Boolean);
+  if(parsed.length)build(parsed);
+}
+function interp(a){
+  const r=[...a];
+  for(let i=0;i<r.length;i++){
+    if(r[i]===null){
+      let pv=null,nv=null,pi=-1,ni=-1;
+      for(let j=i-1;j>=0;j--){if(r[j]!==null){pv=r[j];pi=j;break;}}
+      for(let j=i+1;j<r.length;j++){if(r[j]!==null){nv=r[j];ni=j;break;}}
+      if(pv!==null&&nv!==null)r[i]=Math.round(pv+(nv-pv)*(i-pi)/(ni-pi));
+      else if(pv!==null)r[i]=pv;else if(nv!==null)r[i]=nv;
+    }
+  }return r;
+}
+function mav(a,w){return a.map((v,i)=>{const s=a.slice(Math.max(0,i-w+1),i+1).filter(x=>x!==null);return s.length?Math.round(s.reduce((a,b)=>a+b,0)/s.length):null;});}
+function build(D){
+  Object.values(CH).forEach(c=>c.destroy());CH={};
+  const lb=D.map(d=>d.f),gc='rgba(255,255,255,0.06)',tc='#6b6966';
+  const L=D[D.length-1];
+  const cS={VERDE:'#6db33f',AMARILLO:'#d4a049',ROJO:'#d95f5f'};
+  const bS={VERDE:'#1e2d14',AMARILLO:'#2c2210',ROJO:'#2c1414'};
+  document.getElementById('fh').textContent=`Último registro: ${L.f}`;
+  if(L.s){
+    document.getElementById('ms').textContent=L.s;
+    document.getElementById('ms').style.color=cS[L.s];
+    document.getElementById('mss').textContent=L.al==='ALERTA'?'alerta tendencia activa':'sin alerta de tendencia';
+    document.getElementById('eh').textContent=L.s;document.getElementById('eh').style.color=cS[L.s];
+    document.getElementById('ah').textContent=L.al==='ALERTA'?'tendencia acumulada activa':'';
+  }else{document.getElementById('ms').textContent='Sin AM';}
+  document.getElementById('mac').textContent=L.ac?L.ac.toFixed(2):'—';
+  document.getElementById('mac').style.color=L.ac>1.5?'#d95f5f':'#e8e6e1';
+  document.getElementById('mc7').textContent=Math.round(L.ca7)+' UA';
+  document.getElementById('mfg').textContent=L.fatiga??'—';
+  const fR=D.map(d=>d.fatiga),fI=interp(fR),cI=D.map(d=>d.carga),ma7=mav(cI,7),ma5=mav(fI,5);
+  const hm=document.getElementById('hm');
+  const cols=D.length;
+  let g=`<div class="hmg" style="grid-template-columns:90px repeat(${cols},1fr);min-width:${90+cols*44}px;gap:3px;">`;
+  g+='<div></div>';D.forEach(d=>{g+=`<div class="hmd">${d.f}</div>`;});
+  [['semáforo',0],['tendencia',1],['partido',2]].forEach(([row,ri])=>{
+    g+=`<div class="hml">${row}</div>`;
+    D.forEach(d=>{
+      if(ri===0){if(!d.s){g+=`<div class="hmc" style="background:#272727;color:#444;">∅</div>`;return;}
+        g+=`<div class="hmc" style="background:${bS[d.s]};color:${cS[d.s]};">${d.s==='VERDE'?'V':d.s==='AMARILLO'?'A':'R'}</div>`;}
+      else if(ri===1){if(!d.al){g+=`<div class="hmc" style="background:#272727;color:#444;">∅</div>`;return;}
+        const a=d.al==='ALERTA';g+=`<div class="hmc" style="background:${a?'#2c1414':'#272727'};color:${a?'#d95f5f':'#444'};">${a?'!':'✓'}</div>`;}
+      else{g+=`<div class="hmc" style="background:${d.p?'#0f1e2e':'#272727'};color:${d.p?'#4d9de0':'#444'};">${d.p?'P':'—'}</div>`;}
+    });
+  });g+='</div>';hm.innerHTML=g;
+  CH.c1=new Chart(document.getElementById('c1'),{data:{labels:lb,datasets:[
+    {type:'bar',label:'Carga',data:D.map(d=>d.out?null:d.carga),backgroundColor:'rgba(77,157,224,0.25)',borderColor:'#4d9de0',borderWidth:1,borderRadius:3,yAxisID:'y'},
+    {type:'bar',label:'Outlier',data:D.map(d=>d.out?d.carga:null),backgroundColor:'rgba(232,168,48,0.4)',borderColor:'#e8a830',borderWidth:1,borderRadius:3,yAxisID:'y'},
+    {type:'line',label:'Media 7d',data:ma7,borderColor:'#3a7fc1',borderWidth:2.5,pointRadius:0,tension:0.4,yAxisID:'y',spanGaps:true},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
+    if(ctx.dataset.label==='Outlier')return `⚠ ${ctx.parsed.y} UA — outlier detectado`;
+    return `${ctx.dataset.label}: ${ctx.parsed.y} UA`;
+  }}}},scales:{x:{ticks:{color:tc,font:{size:11},autoSkip:false,maxRotation:45},grid:{color:gc}},y:{ticks:{color:tc,font:{size:11}},grid:{color:gc}}}}});
+  CH.c2=new Chart(document.getElementById('c2'),{type:'line',data:{labels:lb,datasets:[
+    {label:'AC',data:D.map(d=>d.ac),borderColor:'#2ab87f',backgroundColor:'rgba(42,184,127,0.06)',borderWidth:2,pointRadius:4,pointBackgroundColor:D.map(d=>d.ac>1.5?'#e05555':'#2ab87f'),tension:0.3,spanGaps:true},
+    {label:'Límite',data:Array(D.length).fill(1.5),borderColor:'rgba(224,85,85,0.4)',borderWidth:1,borderDash:[5,4],pointRadius:0,fill:{target:{value:1.5},above:'rgba(224,85,85,0.05)'}},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:{size:11},autoSkip:false,maxRotation:45},grid:{color:gc}},y:{min:0,max:2,ticks:{color:tc,font:{size:11}},grid:{color:gc}}}}});
+  CH.c3=new Chart(document.getElementById('c3'),{type:'line',data:{labels:lb,datasets:[
+    {label:'Diaria',data:fR,borderColor:'rgba(224,85,85,0.6)',borderWidth:1.5,pointRadius:3,pointBackgroundColor:'rgba(224,85,85,0.7)',tension:0.2,spanGaps:false},
+    {label:'Interp',data:D.map((d,i)=>d.fatiga===null?fI[i]:null),borderColor:'rgba(224,85,85,0.35)',borderWidth:1.5,borderDash:[4,3],pointRadius:3,tension:0.2,spanGaps:true},
+    {label:'Media 5d',data:ma5,borderColor:'#c43c3c',borderWidth:2.5,pointRadius:0,tension:0.4,spanGaps:true},
+    {label:'Umbral',data:Array(D.length).fill(8),borderColor:'rgba(232,168,48,0.35)',borderWidth:1,borderDash:[5,4],pointRadius:0,fill:{target:{value:8},above:'rgba(232,168,48,0.05)'}},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:{size:11},autoSkip:false,maxRotation:45},grid:{color:gc}},y:{min:0,max:16,ticks:{color:tc,font:{size:11}},grid:{color:gc}}}}});
+  const sems=[...new Set(D.map(d=>d.sem))];
+  const md=sems.map(s=>{
+    const ds=D.filter(d=>d.sem===s),cs=ds.map(d=>d.carga);
+    const m=cs.reduce((a,b)=>a+b,0)/cs.length;
+    const sd=Math.sqrt(cs.map(c=>Math.pow(c-m,2)).reduce((a,b)=>a+b,0)/cs.length);
+    const mono=sd===0?0:parseFloat((m/sd).toFixed(2));
+    return {mono,strain:Math.round(m*cs.length*mono),rojos:ds.filter(d=>d.s==='ROJO').length,partidos:ds.filter(d=>d.p).length,cT:cs.reduce((a,b)=>a+b,0)};
+  });
+  CH.c4=new Chart(document.getElementById('c4'),{data:{labels:sems.map((_,i)=>`Sem ${i+1}`),datasets:[
+    {type:'bar',label:'Strain',data:md.map(d=>d.strain),backgroundColor:'rgba(124,114,216,0.25)',borderColor:'#7c72d8',borderWidth:1,borderRadius:3,yAxisID:'yS'},
+    {type:'line',label:'Mono',data:md.map(d=>d.mono),borderColor:'#7c72d8',borderWidth:2.5,pointRadius:5,pointBackgroundColor:md.map(d=>d.mono>2?'#e05555':'#7c72d8'),tension:0.3,yAxisID:'yM'},
+    {type:'line',label:'Límite',data:Array(sems.length).fill(2),borderColor:'rgba(224,85,85,0.4)',borderWidth:1,borderDash:[5,4],pointRadius:0,yAxisID:'yM'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+    x:{ticks:{color:tc,font:{size:11}},grid:{color:gc}},
+    yS:{position:'left',ticks:{color:tc,font:{size:11}},grid:{color:gc},title:{display:true,text:'Strain',color:tc,font:{size:10}}},
+    yM:{position:'right',min:0,max:4,ticks:{color:'#7c72d8',font:{size:11}},grid:{display:false},title:{display:true,text:'Monotonía',color:'#7c72d8',font:{size:10}}},
+  }}});
+  const pD=[];D.forEach((d,i)=>{if(i<D.length-1&&d.carga>0&&!d.out){const fs=fI[i+1];if(fs!==null)pD.push({x:d.carga,y:fs,p:d.p});}});
+  CH.c5=new Chart(document.getElementById('c5'),{type:'scatter',data:{datasets:[
+    {label:'Normal',data:pD.filter(p=>!p.p).map(p=>({x:p.x,y:p.y})),backgroundColor:'rgba(77,157,224,0.7)',pointRadius:6,pointHoverRadius:8},
+    {label:'Partido',data:pD.filter(p=>p.p).map(p=>({x:p.x,y:p.y})),backgroundColor:'rgba(224,85,85,0.7)',pointRadius:6,pointHoverRadius:8,pointStyle:'triangle'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`Carga: ${ctx.parsed.x} UA → Fatiga D+1: ${ctx.parsed.y}`}}},layout:{padding:20},scales:{
+    x:{ticks:{color:tc,font:{size:11}},grid:{color:gc},title:{display:true,text:'Carga interna (UA)',color:tc,font:{size:10}}},
+    y:{min:0,max:16,ticks:{color:tc,font:{size:11}},grid:{color:gc},title:{display:true,text:'Fatiga global día siguiente',color:tc,font:{size:10}}},
+  }}});
+  const pI=D.map((d,i)=>d.p?i:-1).filter(i=>i>=0);
+  const cP=['#4d9de0','#2ab87f','#7c72d8','#e05555','#e8a830','#6db33f','#c43c3c'];
+  const rDS=pI.map((pi,idx)=>{
+    const pts=[];for(let d=0;d<=3;d++){const ri=pi+d;if(ri<D.length&&fI[ri]!==null)pts.push({x:d,y:fI[ri]});}
+    return {label:`Partido ${D[pi].f}`,data:pts,borderColor:cP[idx%cP.length],backgroundColor:'transparent',borderWidth:1.5,pointRadius:4,tension:0.3};
+  });
+  const lr=document.getElementById('lr');lr.innerHTML='';
+  rDS.forEach(ds=>{const s=document.createElement('span');s.style.cssText='display:flex;align-items:center;gap:5px;font-size:11px;color:#9b9894;';s.innerHTML=`<span style="width:10px;height:10px;border-radius:2px;background:${ds.borderColor};display:inline-block;"></span>${ds.label}`;lr.appendChild(s);});
+  CH.c6=new Chart(document.getElementById('c6'),{type:'line',data:{datasets:rDS},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+    x:{type:'linear',min:0,max:3,ticks:{color:tc,font:{size:11},stepSize:1,callback:v=>['Partido','D+1','D+2','D+3'][v]??v},grid:{color:gc},title:{display:true,text:'días post-partido',color:tc,font:{size:10}}},
+    y:{min:0,max:16,ticks:{color:tc,font:{size:11}},grid:{color:gc},title:{display:true,text:'fatiga global',color:tc,font:{size:10}}},
+  }}});
+  CH.c7=new Chart(document.getElementById('c7'),{type:'line',data:{labels:lb,datasets:[
+    {label:'Aductor',data:mav(interp(D.map(d=>d.am)),5),borderColor:'#e05555',backgroundColor:'rgba(224,85,85,0.06)',borderWidth:2,pointRadius:3,tension:0.4,fill:true,spanGaps:true},
+    {label:'Gemelo',data:mav(interp(D.map(d=>d.gm)),5),borderColor:'#7c72d8',backgroundColor:'rgba(124,114,216,0.05)',borderWidth:2,pointRadius:3,tension:0.4,fill:true,spanGaps:true},
+    {label:'Cuádriceps',data:mav(interp(D.map(d=>d.qm)),5),borderColor:'#2ab87f',backgroundColor:'rgba(42,184,127,0.05)',borderWidth:2,pointRadius:3,tension:0.4,fill:true,spanGaps:true},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:{size:11},autoSkip:false,maxRotation:45},grid:{color:gc}},y:{min:0,max:8,ticks:{color:tc,font:{size:11}},grid:{color:gc}}}}});
+  document.getElementById('sc').innerHTML=md.map((s,i)=>{
+    const mc=s.mono>2?'#d95f5f':s.mono>1.5?'#d4a049':'#6db33f';
+    const mb=s.mono>2?'#2c1414':s.mono>1.5?'#2c2210':'#1e2d14';
+    return `<div class="scard"><div class="sk">Semana ${i+1}</div><div class="sg">
+      <div><div style="color:var(--text3);margin-bottom:2px;">Carga total</div><div class="sv">${s.cT.toLocaleString()} UA</div></div>
+      <div><div style="color:var(--text3);margin-bottom:2px;">Partidos</div><div class="sv">${s.partidos}</div></div>
+      <div><div style="color:var(--text3);margin-bottom:2px;">Días rojo</div><div class="sv" style="color:${s.rojos>0?'#d95f5f':'inherit'};">${s.rojos}</div></div>
+      <div><div style="color:var(--text3);margin-bottom:2px;">Monotonía</div><div class="sv"><span class="badge" style="background:${mb};color:${mc};">${s.mono.toFixed(2)}</span></div></div>
+    </div></div>`;
+  }).join('');
+}
+build(DD);
+</script>
+</body>
+</html>
